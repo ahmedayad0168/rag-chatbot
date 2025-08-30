@@ -1,9 +1,3 @@
-Perfect idea 🙌 A **README.md** makes your GitHub repo look professional and helps others (and your future self) understand how to use your project.
-
-Here’s a tailored **README.md** for your project 👇
-
----
-
 # 📚 RAG Chatbot with Gemini & BAAI Embeddings
 
 This project is a **Retrieval-Augmented Generation (RAG) chatbot**.
@@ -131,7 +125,3 @@ project/
 * [ ] Replace SQLite with **FAISS** or **pgvector** for scalability.
 * [ ] Add a simple **Streamlit/Gradio UI** for chatbot interaction.
 
-
-
-
-👉 Do you want me to also make you a **requirements.txt** file (so others can `pip install -r requirements.txt` easily)?
