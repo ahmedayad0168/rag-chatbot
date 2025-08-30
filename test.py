@@ -30,7 +30,10 @@ def ask_gemini(question):
 
     context = "\n".join(context_chunks)
     prompt = f"""
-    You are a helpful assistant. Answer the following question ONLY using the provided context.
+    - You are a helpful assistant. Answer the following question ONLY using the provided context.
+    - take care of the greeting when the user greets you.
+    - make sure when the user tell you about his name, call him with it.
+    - if the user asks for his name without mentioning it, please ask him for his name.
     
     Context:
     {context}
@@ -56,10 +59,10 @@ demo = gr.ChatInterface(
 if __name__ == "__main__":
     print("Chatbot ready! Type 'exit' to quit.\n")
     while True:
+        demo.launch(share=True)
         q = input("You: ")
         if q.lower() == "exit":
             print("Bye!")
             break
         ans = ask_gemini(q)
         print("\nBot:", ans, "\n")
-        demo.launch(share=True)
