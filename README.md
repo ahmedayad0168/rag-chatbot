@@ -1,127 +1,143 @@
 # 📚 RAG Chatbot with Gemini & BAAI Embeddings
 
-This project is a **Retrieval-Augmented Generation (RAG) chatbot**.
-It uses **BAAI/bge-m3** embeddings for semantic search and **Google Gemini** for generating answers.
-Documents (PDF & PPTX) are ingested into a **SQLite database**, then retrieved to answer user questions.
+A **Retrieval-Augmented Generation (RAG)** chatbot that uses:
+- **BAAI/bge-m3** for embeddings  
+- **Google Gemini API** for answer generation  
+- **SQLite** for document storage and semantic search  
+
+This project allows you to turn your **PDFs** and **PPTXs** into a context-aware assistant!  
 
 ---
 
-## ⚡ Features
+## 🚀 Features
 
-* 📂 Ingest PDF and PPTX documents.
-* ✂️ Automatically chunks text into smaller pieces for embedding.
-* 🔎 Semantic search using **BAAI/bge-m3** embeddings.
-* 🤖 Context-aware answers powered by **Gemini API**.
-* 💾 Stores everything in a lightweight **SQLite database**.
+- 📂 Ingest `.pdf` and `.pptx` documents  
+- ✂️ Automatic text chunking for embeddings  
+- 🔎 Semantic search with **BAAI/bge-m3**  
+- 🤖 Context-aware responses powered by **Gemini API**  
+- 💾 Storage in lightweight **SQLite** database  
+- 📤 Optional export of data to `.json`  
 
 ---
 
-## 🛠️ Setup
+## ⚙️ Setup
 
-### 1. Clone the repository
-
+### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
+git clone https://github.com/ahmedayad0168/rag-chatbot.git
+cd rag-chatbot
 ```
 
-### 2. Create a virtual environment
-
+### 2. Create a Virtual Environment
 ```bash
 python -m venv venv
-source venv/bin/activate   # on Linux/Mac
-venv\Scripts\activate      # on Windows
+# Windows
+venv\Scripts\activate
+# macOS/Linux
+source venv/bin/activate
 ```
 
-### 3. Install dependencies
-
+### 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-*(Make sure you have PyTorch installed for `sentence-transformers`)*
+*(Make sure you also have PyTorch installed for `sentence-transformers`.)*
 
-### 4. Environment variables
-
+### 4. Environment Variables
 Create a `.env` file in the project root:
-
 ```env
-GEMINI_API_KEY=your_google_api_key
-DB_PATH=E:/my projects/test/test/DataBase.db
+GEMINI_API_KEY=your_gemini_api_key_here
+DB_PATH=E:/my_projects/rag-chatbot/DataBase.db
 ```
 
-⚠️ **Do not commit `.env` to GitHub**. Add it to `.gitignore`.
+⚠️ Add `.env` to `.gitignore` to keep your API key safe.
 
 ---
 
-## 🚀 Usage
+## 📖 Usage
 
-### Ingest documents
-
-Run the ingestion script to add documents (PDF/PPTX) to the database:
-
+### Step 1 — Ingest Documents
+Edit `file_path` in **`ingest.py`**:
+```python
+file_path = r"E:/my projects/documents/MyDoc.pptx"
+```
+Run:
 ```bash
 python ingest.py
 ```
-
-Edit the file path inside `ingest.py`:
-
-```python
-file_path = r"E:/my projects/documents/Data Science Methodology.pptx"
-```
-
-After ingestion, chunks and embeddings are saved into the database.
+This creates the database and saves embeddings.
 
 ---
 
-### Run the chatbot
-
+### Step 2 — Start the Chatbot
+**Option A — Terminal**
 ```bash
 python chatbot.py
 ```
-
 Example:
-
 ```
 Chatbot ready! Type 'exit' to quit.
 
-You: what is data science
+You: What is data science?
 Bot: Data science is the field that combines ...
 ```
+
+**Option B — Web UI (Gradio)**
+If you add Gradio to `chatbot.py`, run:
+```bash
+python chatbot.py
+```
+Open the provided link in your browser to chat interactively.
+
+---
+
+### Step 3 — Export Database to JSON (Optional)
+```python
+import database
+database.export_to_json("database.json")
+```
+
+This creates a `.json` file containing all chunks and embeddings.
 
 ---
 
 ## 📂 Project Structure
 
 ```
-project/
-│── chatbot.py      # Chatbot logic (retrieval + Gemini)
-│── ingest.py       # Ingest PDF/PPTX into database
-│── database.py     # SQLite database functions
-│── config.py       # Configuration (loads .env)
-│── requirements.txt
-│── .env            # Environment variables (not in repo)
-│── DataBase.db     # SQLite database (created automatically)
+rag-chatbot/
+│── chatbot.py         # Chatbot interface (CLI/Gradio UI)
+│── ingest.py          # Document ingestion pipeline
+│── database.py        # SQLite + JSON export
+│── config.py          # Loads environment variables
+│── requirements.txt   # Dependencies
+│── README.md          # Project description
+│── .env               # API key & DB path (ignored in git)
+│── DataBase.db        # SQLite database (auto-created)
+│── database.json      # Optional JSON export
 ```
-
----
-
-## 📦 Requirements
-
-* Python 3.9+
-* [sentence-transformers](https://www.sbert.net/)
-* [PyPDF2](https://pypi.org/project/pypdf2/)
-* [python-pptx](https://python-pptx.readthedocs.io/)
-* [google-generativeai](https://pypi.org/project/google-generativeai/)
-* [numpy](https://numpy.org/)
-* [python-dotenv](https://pypi.org/project/python-dotenv/)
 
 ---
 
 ## 🔮 Future Improvements
 
-* [ ] Add ingestion for `.docx` and `.txt` files.
-* [ ] Support folder ingestion (all documents in a directory).
-* [ ] Replace SQLite with **FAISS** or **pgvector** for scalability.
-* [ ] Add a simple **Streamlit/Gradio UI** for chatbot interaction.
+- Ingest all files in a folder automatically  
+- Add support for `.docx` and `.txt`  
+- Replace SQLite with **FAISS** or **pgvector** for large-scale search  
+- Smarter chunking (by sentences/sections)  
+- Full Gradio UI with **file upload + chat**  
 
+---
+
+## ⚠️ Notes
+
+- Don’t upload `.env` (contains API key)  
+- Large PDFs/PPTXs may take time to ingest  
+- Make sure you use a valid Gemini model (`gemini-1.5-flash` recommended)  
+
+---
+
+## 👨‍💻 Author
+
+Built with by **Ahmed Ayad**  
+👉 [GitHub Profile](https://github.com/ahmedayad0168)
