@@ -4,6 +4,7 @@ import database
 from sentence_transformers import SentenceTransformer, util
 import google.generativeai as genai
 from config import GEMINI_API_KEY, MODEL_NAME
+import gradio as gr 
 
 genai.configure(api_key=GEMINI_API_KEY)
 model = SentenceTransformer(MODEL_NAME)
@@ -43,6 +44,15 @@ def ask_gemini(question):
     except Exception as e:
         return f"Error with Gemini API: {e}"
 
+def rag_chat(message, history):
+    return ask_gemini(message)
+
+demo = gr.ChatInterface(
+    fn=rag_chat,
+    title=" RAG Chatbot with Gemini",
+    description="Ask questions about your ingested documents."
+)
+
 if __name__ == "__main__":
     print("Chatbot ready! Type 'exit' to quit.\n")
     while True:
@@ -52,3 +62,4 @@ if __name__ == "__main__":
             break
         ans = ask_gemini(q)
         print("\nBot:", ans, "\n")
+        demo.launch(share=True)

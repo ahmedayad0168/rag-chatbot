@@ -1,3 +1,4 @@
+import json
 import sqlite3
 import numpy as np
 from config import DB_PATH
@@ -57,7 +58,7 @@ def get_chunks_and_vectors():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT c.chunk_text, e.vector FROM chunks c JOIN embeddings e ON c.id = e.chunk_id")
-    rows = cur.fetchall()
+    rows = cur.fetchall() # ??
     conn.close()
 
     chunks, vectors = [], []
@@ -66,3 +67,26 @@ def get_chunks_and_vectors():
         vectors.append(np.frombuffer(vec, dtype=np.float32))
 
     return chunks, np.array(vectors)
+
+def export_to_json(json_path= "database.json"):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT d.file_path, c.chunk_text, e.vector
+        FROM documents d
+        JOIN chunks c ON d.id = c.document_id
+        JOIN embeddings e ON c.id = e.chunk_id
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    data = []
+
+    for file_path, chunk_text, vec in rows:
+        data.append({
+            "file_path": file_path,
+            "chunk_text": chunk_text,
+            "vector": np.frombuffer(vec, dtype=np.float32).tolist()
+        })
+
+    with open(json_path, "w" , encoding= "utf_8") as f:
+        json.dump(data, f, indent= 2, ensure_ascii= False)

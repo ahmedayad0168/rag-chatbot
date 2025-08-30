@@ -49,7 +49,7 @@ def ingest_file(file_path, chunk_size=200):
     cur.execute("INSERT OR IGNORE INTO documents (file_path) VALUES (?)", (file_path,))
     conn.commit()
     cur.execute("SELECT id FROM documents WHERE file_path=?", (file_path,))
-    document_id = cur.fetchone()[0]
+    document_id = cur.fetchone()[0] # ??
     conn.close()
 
     vectors = model.encode(chunks, batch_size=32, show_progress_bar=True)
@@ -64,5 +64,5 @@ def ingest_file(file_path, chunk_size=200):
 #        i += 1
 
 if __name__ == "__main__":
-    file_path = r"E:/my projects/documents/Data Science Methodology.pptx"
+    file_path = r"E:/my projects/documents/What is Data Science - Module1.pptx"
     ingest_file(file_path, chunk_size=150)
