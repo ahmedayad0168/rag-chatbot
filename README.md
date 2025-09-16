@@ -60,7 +60,7 @@ DB_PATH=E:/my_projects/rag-chatbot/DataBase.db
 ### Step 1 — Ingest Documents
 Edit `file_path` in **`ingest.py`**:
 ```python
-file_path = r"E:/my projects/documents/MyDoc.pptx"
+file_path = r"MyDoc.pptx"
 ```
 Run:
 ```bash
@@ -133,7 +133,7 @@ rag-chatbot/
 
 - Don’t upload `.env` (contains API key)  
 - Large PDFs/PPTXs may take time to ingest  
-- Make sure you use a valid Gemini model (`gemini-1.5-flash` recommended)  
+- Make sure you use a valid Gemini model (`gemini-2.0-flash` recommended)  
 
 ---
 
