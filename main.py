@@ -8,6 +8,7 @@ from config import GEMINI_API_KEY, MODEL_NAME, CHUNK_SIZE
 import gradio as gr
 from ingest import ingest_file
 import shutil
+from db_sqlserver import fetch_data, get_all_tables
 
 # configure API
 genai.configure(api_key=GEMINI_API_KEY)
@@ -39,19 +40,44 @@ def search_context(query, top_k=3):
 # Gemini QA
 # ------------------------
 def ask_gemini(question):
+    # read all chunks from documents
     context_chunks = search_context(question, top_k=3)
     if not context_chunks:
         return "Database is empty. Please ingest documents first."
 
-    context = "\n".join(context_chunks)
+    context_1 = "\n".join(context_chunks)
+
+    # select all from database
+    tables = get_all_tables()
+    documents = []
+
+    for table in tables:
+        try:
+            df = fetch_data(f"SELECT * FROM {table}")
+            if df.empty:
+                continue
+
+            # Convert each row to readable text
+            for _, row in df.iterrows():
+                row_text = f"{table}: " + ", ".join(
+                    [f"{col}={row[col]}" for col in df.columns]
+                )
+                documents.append(row_text)
+        except Exception as e:
+            documents.append(f"Could not read table {table}: {e}")
+
+    context_2 = '\n'.join(documents)
     prompt = f"""
-    You are a helpful assistant. Answer the following question ONLY using the provided context.
+    You are a helpful assistant. Answer the following question ONLY using the provided context and the connected database.
     - If the user greets you, respond politely.
     - If the user tells you their name, remember it and use it.
     - If the user asks for their name without mentioning it, ask them first.
 
     Context:
-    {context}
+    {context_1}
+
+    Database content:
+    {context_2}
 
     Question: {question}
     """
@@ -168,4 +194,3 @@ with gr.Blocks() as demo:
 
 if __name__ == "__main__":
     demo.launch()
-
