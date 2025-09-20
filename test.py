@@ -167,5 +167,5 @@ with gr.Blocks() as demo:
 
 
 if __name__ == "__main__":
-    print("Chatbot ready at http://127.0.0.1:7860")
     demo.launch()
+
