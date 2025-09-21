@@ -9,6 +9,7 @@ import gradio as gr
 from ingest import ingest_file
 import shutil
 from db_sqlserver import fetch_data, get_all_tables
+from prompts import system_prompt
 
 # configure API
 genai.configure(api_key=GEMINI_API_KEY)
@@ -68,10 +69,7 @@ def ask_gemini(question):
 
     context_2 = '\n'.join(documents)
     prompt = f"""
-    You are a helpful assistant. Answer the following question ONLY using the provided context and the connected database.
-    - If the user greets you, respond politely.
-    - If the user tells you their name, remember it and use it.
-    - If the user asks for their name without mentioning it, ask them first.
+    {system_prompt}
 
     Context:
     {context_1}
