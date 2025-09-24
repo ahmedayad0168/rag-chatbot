@@ -8,7 +8,7 @@ import pytesseract
 from PIL import Image
 from sentence_transformers import SentenceTransformer
 import database
-from config import MODEL_NAME, CHUNK_SIZE
+from config import MODEL_NAME
 
 database.init_db()
 

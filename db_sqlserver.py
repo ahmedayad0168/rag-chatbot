@@ -1,4 +1,3 @@
-from string import printable
 import pyodbc
 import pandas as pd
 
