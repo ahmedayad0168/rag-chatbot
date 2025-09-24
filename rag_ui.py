@@ -154,7 +154,4 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 # Launch App
 # ============================
 if __name__ == "__main__":
-<<<<<<< HEAD
     demo.launch()
-=======
->>>>>>> cca75441efd9141fbcd3504824bea13d7285b2b5
