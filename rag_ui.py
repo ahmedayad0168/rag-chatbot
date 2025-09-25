@@ -4,7 +4,7 @@ import shutil
 import gradio as gr
 from ingest import ingest_file
 from config import CHUNK_SIZE
-from Document_intelligence import text_to_speech, speech_to_text, ask_gemini
+from main import text_to_speech, speech_to_text, ask_gemini
 
 
 # ------------------------
