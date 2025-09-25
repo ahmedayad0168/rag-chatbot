@@ -1,7 +1,6 @@
 # modules
 import os
 import shutil
-from typing import Tuple
 import gradio as gr
 from ingest import ingest_file
 from config import CHUNK_SIZE
@@ -88,7 +87,7 @@ def handle_send(message: str, history_state: list):
     history = history_state or []
     if not message or not message.strip():
         # Nothing to send
-        choices = [f"{i} 🔊 {h[1].strip().replace('\\n', ' ')[:80]}" for i, h in enumerate(history)]
+        choices = [f"{i+1} 🔊 {h[1].strip().replace('\\n', ' ')[:80]}" for i, h in enumerate(history)]
         return history, "", history, gr.update(choices=choices, value=(choices[-1] if choices else None))
 
     # Get the textual response (no TTS here)
@@ -96,7 +95,7 @@ def handle_send(message: str, history_state: list):
     history = history + [(message, response)]
 
     # Build choices for the "play" dropdown (indexed)
-    choices = [f"{i} 🔊 {h[1].strip().replace('\\n', ' ')[:80]}" for i, h in enumerate(history)]
+    choices = [f"{i+1} 🔊 {h[1].strip().replace('\\n', ' ')[:80]}" for i, h in enumerate(history)]
 
     # Outputs: chatbot history, cleared input box, updated history state, updated dropdown choices
     return history, "", history, gr.update(choices=choices, value=choices[-1])
@@ -113,7 +112,7 @@ def play_selected(choice: str, history_state: list):
 
     try:
         idx_str = str(choice).split(" ", 1)[0]
-        idx = int(idx_str)
+        idx = int(idx_str) - 1  # Adjust for 1-based indexing
     except Exception:
         return None
 
@@ -129,77 +128,238 @@ def play_selected(choice: str, history_state: list):
     audio_path = text_to_speech(bot_text)
     return audio_path
 
+def stop_audio():
+    """Stop audio playback"""
+    return None
+
+def clear_chat(history_state):
+    """Clear chat history"""
+    return [], [], gr.update(choices=[], value=None)
+
+# Custom CSS for better styling
+custom_css = """
+.gradio-container {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.header {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.chatbot {
+    min-height: 400px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
+.textbox {
+    border-radius: 8px;
+}
+.button {
+    border-radius: 6px;
+    font-weight: 500;
+}
+.tab {
+    border-radius: 10px;
+}
+.control-panel {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+.file-manager {
+    background: #f0f8ff;
+    padding: 15px;
+    border-radius: 10px;
+}
+"""
 
 # ============================
-# Interface
+# Improved Interface
 # ============================
-with gr.Blocks(theme=gr.themes.Soft()) as demo:
-    with gr.Tab("File Management"):
+with gr.Blocks(theme=gr.themes.Soft(), css=custom_css) as demo:
+    
+    # Header
+    gr.Markdown("""
+    <div class="header">
+        <h1>🎯 Smart RAG Chatbot</h1>
+        <p>Upload documents, chat with AI, and listen to responses</p>
+    </div>
+    """)
+    
+    with gr.Tab("📁 File Management", elem_classes="tab"):
+        gr.Markdown("### 📂 Upload and Manage Documents")
+        
         with gr.Row():
-            file_input = gr.File(label="Upload file(s)", type="filepath", file_count="multiple")
-            ingest_btn = gr.Button("Ingest")
-            file_list = gr.Dropdown(choices=[], label="Uploaded Files (select to delete)")
-            delete_btn = gr.Button("Delete Selected")
-            out = gr.Textbox(label="Output", interactive=False)
-
+            with gr.Column(scale=3):
+                file_input = gr.File(
+                    label="📤 Upload File(s)", 
+                    type="filepath", 
+                    file_count="multiple",
+                    height=100
+                )
+                
+                with gr.Row():
+                    ingest_btn = gr.Button("🚀 Ingest Files", variant="primary", size="lg")
+                    clear_files_btn = gr.Button("🗑️ Clear All", variant="secondary")
+                
+            with gr.Column(scale=2, elem_classes="file-manager"):
+                gr.Markdown("**📋 Uploaded Files**")
+                file_list = gr.Dropdown(
+                    choices=[], 
+                    label="Select file to delete",
+                    interactive=True
+                )
+                
+                with gr.Row():
+                    delete_btn = gr.Button("❌ Delete Selected", variant="stop")
+                    refresh_btn = gr.Button("🔄 Refresh List")
+        
+        output_status = gr.Textbox(
+            label="📊 Status", 
+            interactive=False,
+            lines=2,
+            max_lines=4
+        )
+        
         uploaded_state = gr.State([])
 
-        ingest_btn.click(
-            fn=ingest_and_save,
-            inputs=[file_input, uploaded_state],
-            outputs=[file_list, out, uploaded_state]
-        )
-
-        delete_btn.click(
-            fn=delete_file,
-            inputs=[file_list, uploaded_state],
-            outputs=[file_list, out, uploaded_state]
-        )
-
-    with gr.Tab("Chatbot"):
-        gr.Markdown("### RAG Chatbot ###")
-
-        chatbot = gr.Chatbot(height=420, label="Conversation")
-        msg = gr.Textbox(
-            label="Your Message",
-            placeholder="Type your question here...",
-            lines=2
-        )
-
-        # Small row: Send + inline mic (emoji-style)
+    with gr.Tab("💬 Chatbot", elem_classes="tab"):
+        gr.Markdown("### 🤖 Chat with Your Documents")
+        
         with gr.Row():
-            send_btn = gr.Button("Send", variant="primary")
-            mic_btn = gr.Button("🎤")   # small mic button to fill textbox from speech
-            # Play controls for listening to any past reply
-            play_dropdown = gr.Dropdown(label="Select bot reply to play (🔊)", choices=[], value=None)
-            play_btn = gr.Button("🔊 Play")
-
-        # Audio output (shows generated audio file when you click Play)
-        audio_output = gr.Audio(label="Audio Player (play when ready)", type="filepath")
+            with gr.Column(scale=3):
+                # Chat interface
+                chatbot = gr.Chatbot(
+                    height=450, 
+                    label="💭 Conversation",
+                    show_copy_button=True,
+                    bubble_full_width=False,
+                    placeholder="Start chatting with the AI..."
+                )
+                
+                # Message input with better layout
+                with gr.Row():
+                    msg = gr.Textbox(
+                        label="💬 Your Message",
+                        placeholder="Type your question here or use voice input...",
+                        lines=2,
+                        scale=4
+                    )
+                    send_btn = gr.Button("📤 Send", variant="primary", scale=1)
+                
+                # Control buttons row
+                with gr.Row():
+                    mic_btn = gr.Button("🎤 Voice Input", variant="secondary")
+                    clear_chat_btn = gr.Button("🧹 Clear Chat", variant="secondary")
+                    stop_audio_btn = gr.Button("⏹️ Stop Audio", variant="stop")
+            
+            with gr.Column(scale=1, elem_classes="control-panel"):
+                gr.Markdown("### 🔊 Audio Controls")
+                
+                play_dropdown = gr.Dropdown(
+                    label="🎵 Select Response to Play",
+                    choices=[], 
+                    value=None,
+                    info="Choose a previous response to listen to"
+                )
+                
+                with gr.Row():
+                    play_btn = gr.Button("▶️ Play Selected", variant="primary")
+                    refresh_audio_btn = gr.Button("🔄 Refresh List")
+                
+                audio_output = gr.Audio(
+                    label="🎧 Audio Player",
+                    type="filepath",
+                    interactive=False,
+                    show_download_button=True
+                )
+                
+                gr.Markdown("---")
+                gr.Markdown("### ℹ️ Session Info")
+                session_info = gr.Textbox(
+                    label="Status",
+                    value="✅ Ready to chat",
+                    interactive=False,
+                    lines=2
+                )
 
         # History state
         history_state = gr.State([])
 
-        # Send typed text -> update history (chatbot), clear msg, update history_state & play_dropdown
-        send_btn.click(
-            fn=handle_send,
-            inputs=[msg, history_state],
-            outputs=[chatbot, msg, history_state, play_dropdown]
-        )
+    # ============================
+    # Event Handlers
+    # ============================
 
-        # Microphone: fill textbox with recognized speech (does NOT auto-send, does not auto-play)
-        mic_btn.click(
-            fn=speech_to_text,
-            inputs=None,
-            outputs=msg
-        )
+    # File Management Tab
+    ingest_btn.click(
+        fn=ingest_and_save,
+        inputs=[file_input, uploaded_state],
+        outputs=[file_list, output_status, uploaded_state]
+    )
 
-        # Play selected bot reply's audio on demand
-        play_btn.click(
-            fn=play_selected,
-            inputs=[play_dropdown, history_state],
-            outputs=audio_output
-        )
+    delete_btn.click(
+        fn=delete_file,
+        inputs=[file_list, uploaded_state],
+        outputs=[file_list, output_status, uploaded_state]
+    )
+
+    refresh_btn.click(
+        fn=lambda x: gr.update(choices=x or [""]),
+        inputs=[uploaded_state],
+        outputs=[file_list]
+    )
+
+    clear_files_btn.click(
+        fn=lambda: ([], gr.update(choices=[], value=None), "All files cleared"),
+        outputs=[uploaded_state, file_list, output_status]
+    )
+
+    # Chatbot Tab
+    send_btn.click(
+        fn=handle_send,
+        inputs=[msg, history_state],
+        outputs=[chatbot, msg, history_state, play_dropdown]
+    )
+
+    msg.submit(
+        fn=handle_send,
+        inputs=[msg, history_state],
+        outputs=[chatbot, msg, history_state, play_dropdown]
+    )
+
+    mic_btn.click(
+        fn=speech_to_text,
+        inputs=None,
+        outputs=msg
+    )
+
+    play_btn.click(
+        fn=play_selected,
+        inputs=[play_dropdown, history_state],
+        outputs=audio_output
+    )
+
+    stop_audio_btn.click(
+        fn=stop_audio,
+        outputs=audio_output
+    )
+
+    clear_chat_btn.click(
+        fn=clear_chat,
+        inputs=[history_state],
+        outputs=[chatbot, history_state, play_dropdown]
+    )
+
+    refresh_audio_btn.click(
+        fn=lambda hist: gr.update(choices=[f"{i+1} 🔊 {h[1].strip().replace('\\n', ' ')[:80]}" for i, h in enumerate(hist)] if hist else []),
+        inputs=[history_state],
+        outputs=[play_dropdown]
+    )
+
 # ============================
 # Launch App
 # ============================
