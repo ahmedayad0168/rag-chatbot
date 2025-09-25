@@ -69,13 +69,13 @@ def ask_gemini(question):
     prompt = f"""
     {system_prompt}
 
-    Context:
-    {context_1}
+    **Input format:**
+    Document Context: {context_1}
+    Database Query Result: {context_2} 
+    User's Question: {question}
 
-    Database content:
-    {context_2}
-
-    Question: {question}
+    **Output format:**
+    [Clear, structured response using both sources]
     """
 
     try:
