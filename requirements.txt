@@ -1,0 +1,14 @@
+
+gradio
+python-dotenv
+sentence-transformers
+google-generativeai
+pyttsx3
+SpeechRecognition
+PyPDF2
+python-pptx
+python-docx
+pandas
+pillow
+pytesseract
+pyodbc
