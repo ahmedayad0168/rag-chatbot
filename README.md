@@ -26,7 +26,7 @@ A **Retrieval-Augmented Generation (RAG) chatbot** that combines:
 
 Clone the repository:
 ```bash
-git clone https://github.com/yourusername/rag-chatbot.git
+git clone https://github.com/ahmedayad0168/rag-chatbot.git
 cd rag-chatbot
 ````
 
